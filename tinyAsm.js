@@ -54,7 +54,7 @@ var tinyAsmInstructions = {
     },
     "BNE": {
         "args": [{"name": "slot1", "type": "slot"}, {"name": "slot2", "type": "slot"}, {"name": "label", "type": "label"}],
-        "desc": "Jump to lineNumber if value in slot1 doesn't equal value in slot2.",
+        "desc": "Jumps to label if value in slot1 doesn't equal value in slot2.",
         "_exec": function(ta, args) {
             var slot1 = args[0];
             var slot2 = args[1];
@@ -77,6 +77,18 @@ var tinyAsmInstructions = {
         }
     }
 };
+
+// An example program.
+var tinyAsmExample =
+    "# Counts to 10 in slot A\n" +
+    "\n" +
+    "STR 0 A  # counter\n" +
+    "STR 10 B # max value of A\n" +
+    "STR 1 C  # amount we increment A by each loop\n" +
+    "\n" +
+    ">loop\n" +
+    "ADD C A       # add C to A (increment A)\n" +
+    "BNE A B loop  # (keep looping unless A == B)\n"
 
 // A TinyAsm allows a user to run (with TinyAsm.run()) or step (with
 // TinyAsm.step()) code derived from the string rawCode.
@@ -178,7 +190,10 @@ TinyAsm.prototype.redrawRunningCode = function() {
         var lineDiv = document.createElement("p");
         var op = this.parsedCode[i].op;
         var args = this.parsedCode[i].args;
-        lineDiv.innerHTML = "" + i + ": " + op + " " + JSON.stringify(args);
+        lineDiv.innerHTML = "" + i + ": " + op;
+        for (var j = 0; j < args.length; j++) {
+            lineDiv.innerHTML += " " + args[j];
+        }
         if (i === this.pc) {
             // If this is the current instruction, highlight it.
             lineDiv.className += " current-instruction";
@@ -200,8 +215,17 @@ TinyAsm.prototype.parse = function() {
     // resulting from the parsing in this.parsedCode.
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
+
+        // Remove comments and trailing whitespace.
+        var commentIndex = line.indexOf(this.COMMENT_CHAR);
+        if (commentIndex >= 0) {
+            line = line.slice(0, commentIndex);
+        }
+        line = line.trim();
+
+        // Skip empty lines, or lines that are empty after removing comments
+        // and whitespace.
         if (!line) {
-            // Skip empty lines.
             continue;
         }
 
@@ -229,15 +253,6 @@ TinyAsm.prototype.parse = function() {
 //
 // Assumes that the line is not an empty string.
 TinyAsm.prototype.parseLine = function(line) {
-    // Remove trailing whitespace.
-    line = line.trim();
-
-    // Strip any characters after the comment character, inclusive.
-    var commentIndex = line.indexOf(this.COMMENT_CHAR);
-    if (commentIndex > 0) {
-        line = line.slice(0, commentIndex).trim();
-    }
-
     // First, check if this line is a label.
     if (line[0] === this.LABEL_CHAR) {
         // This line is a label, not an op followed by args.
@@ -313,11 +328,11 @@ TinyAsm.prototype.checkType = function(arg, type) {
         case "label":
             // Labels cannot contain spaces, the comment character, or the
             // label character.
-            if (arg.indexOf(" ") > 0) {
+            if (arg.indexOf(" ") >= 0) {
                 return "Labels cannot contain spaces";
-            } else if (arg.indexOf(this.LABEL_CHAR) > 0) {
+            } else if (arg.indexOf(this.LABEL_CHAR) >= 0) {
                 return "Labels cannot contain " + this.LABEL_CHAR;
-            } else if (arg.indexOf(this.COMMENT_CHAR) > 0) {
+            } else if (arg.indexOf(this.COMMENT_CHAR) >= 0) {
                 return "Labels cannot contain " + this.COMMENT_CHAR;
             }
             break;

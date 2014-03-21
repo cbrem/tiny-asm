@@ -13,12 +13,19 @@
                 var instructionsDiv = document.getElementById("instructions");
                 var instructions = tinyAsmInstructions;
                 for (var instruction in instructions) {
+                    // Append a group of operand and and arguments, along with a description.
                     var instructionDiv = document.createElement("p");
-                    var args = JSON.stringify(instructions[instruction].args); // TODO: take out types
-                    var desc = instructions[instruction].desc;
-                    instructionDiv.innerHTML = instruction + ": " + args + " (" + desc + ")";
+                    instructionDiv.innerHTML = instruction;
+                    for (var i = 0; i < instructions[instruction].args.length; i++) {
+                        instructionDiv.innerHTML += " " + instructions[instruction].args[i].name;
+                    }
+                    instructionDiv.innerHTML += ": <i>" + instructions[instruction].desc + "</i>";
                     instructionsDiv.appendChild(instructionDiv);
                 }
+
+                // Fill raw-code with example code.
+                var rawCode = document.getElementById("raw-code");
+                rawCode.value = tinyAsmExample;
             };
 
             // Attempts to run the code.
@@ -71,7 +78,7 @@
             <div id="middle-container">
                 <div class="centered-container">
                     <h2>Write Code Here:</h2>
-                    <textarea cols="30" rows="20" id="raw-code"></textarea>
+                    <textarea cols="50" rows="20" id="raw-code"></textarea>
                 </div>
                 <div class="centered-container">
                     <h2>Running Code:</h2>
