@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="styles.css" type="text/css" rel="stylesheet"/>
+        <link href="tinyAsm.css" type="text/css" rel="stylesheet"/>
+        <script src="tinyAsm.js"></script>
+        <script>
+            var ta = null;
+
+            window.onload = function() {
+                // Fill instructionsDiv with a description of the tinyAsm
+                // instruction set.
+                var instructionsDiv = document.getElementById("instructions");
+                var instructions = tinyAsmInstructions;
+                for (var instruction in instructions) {
+                    var instructionDiv = document.createElement("p");
+                    var args = JSON.stringify(instructions[instruction].args); // TODO: take out types
+                    var desc = instructions[instruction].desc;
+                    instructionDiv.innerHTML = instruction + ": " + args + " (" + desc + ")";
+                    instructionsDiv.appendChild(instructionDiv);
+                }
+            };
+
+            // Attempts to run the code.
+            function run() {
+                if (ta === null || ta.running === false) {
+                    // The TinyAsm has either stopped running or was never running.
+                    var rawCode = document.getElementById("raw-code").value;
+                    var runningCodeDiv = document.getElementById("running-code");
+                    var slotsDiv = document.getElementById("slots");
+                    ta = new TinyAsm(rawCode, runningCodeDiv, slotsDiv);
+                    var err = ta.parse();
+                    if (err) {
+                        alert(err);
+                    } else {
+                        ta.run();
+                    }
+                }
+            }
+
+            // Steps an existing TinyAsm forward,
+            // or create a new TinyAsm is there is none.
+            function step() {
+                if (ta === null) {
+                    // There is no current TinyAsm.
+                    var rawCode = document.getElementById("raw-code").value;
+                    var runningCodeDiv = document.getElementById("running-code");
+                    var slotsDiv = document.getElementById("slots");
+                    ta = new TinyAsm(rawCode, runningCodeDiv, slotsDiv);
+                    var err = ta.parse();
+                    if (err) {
+                        ta = null;
+                        alert(err);
+                        return;
+                    }
+                } else if (!ta.running) {
+                    // There is a current TinyAsm which is not freely running.
+                    ta.step();
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div id="main-container">
+            <div id="top-container">
+                <h1>TinyASM</h1>
+                <div id="instructions"></div>
+                <button onclick="run()">Run</button>
+                <button onclick="step()">Step</button>
+            </div>
+            <div id="middle-container">
+                <div class="centered-container">
+                    <h2>Write Code Here:</h2>
+                    <textarea cols="30" rows="20" id="raw-code"></textarea>
+                </div>
+                <div class="centered-container">
+                    <h2>Running Code:</h2>
+                    <div id="running-code"></div>
+                </div>
+                <div class="centered-container">
+                    <h2>Slots:</h2>
+                    <div id="slots"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

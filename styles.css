@@ -1,0 +1,17 @@
+/* This file contains styles for index.html. */
+
+#middle-container {
+    text-align: center;
+    height: 450px;
+}
+
+.centered-container {
+    display: inline-block;
+    vertical-align: top;
+    margin: 50px;
+    padding: 22px;
+    text-align: left;
+    border: 5px solid black;
+    height: 100%;
+    width: 20%;
+}

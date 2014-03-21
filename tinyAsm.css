@@ -1,0 +1,6 @@
+/* This file contains styles for use with tinyAsm.js. */
+
+.current-instruction {
+    color: white;
+    background-color: red;
+}
