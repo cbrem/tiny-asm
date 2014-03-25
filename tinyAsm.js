@@ -5,6 +5,7 @@
 
 // TODO:
 //  - After updating slots, wait before selecting new instruction.
+//  - make runningCode and slots scroll boxes? or don't make heights fixed...
 
 var tinyAsmInstructions = {
     "ADD": {
@@ -88,7 +89,7 @@ var tinyAsmExample =
     "\n" +
     ">loop\n" +
     "ADD C A       # add C to A (increment A)\n" +
-    "BNE A B loop  # (keep looping unless A == B)\n"
+    "BNE A B loop  # (keep looping unless A == B)\n";
 
 // A TinyAsm allows a user to run (with TinyAsm.run()) or step (with
 // TinyAsm.step()) code derived from the string rawCode.
@@ -101,11 +102,11 @@ var tinyAsmExample =
 // invalid.
 function TinyAsm(rawCode, runningCodeDiv, slotsDiv) {
     // Constants.
-    this.DELAY = 1000;
+    this.DELAY = 500;
     this.LABEL_CHAR = ">";
     this.COMMENT_CHAR = "#";
 
-    // Initialized vars.
+    // Internal vars.
     this.rawCode = rawCode;
     this.runningCodeDiv = runningCodeDiv;
     this.slotsDiv = slotsDiv;
@@ -113,7 +114,11 @@ function TinyAsm(rawCode, runningCodeDiv, slotsDiv) {
     this.labels = {};
     this.parsedCode = [];
     this.pc = 0;
+
+    // External flags which indicate whether the TinyAsm object is either
+    // currently running or currently in the middle of a step.
     this.running = false;
+    this.stepping = false;
 }
 
 // A line of parsed code.
@@ -125,7 +130,9 @@ function _Line(op, args) {
 // Runs the code to completion, visualizing it as we go.
 TinyAsm.prototype.run = function() {
     if (!this.running) {
+        // Record that we are running.
         this.running = true;
+
         this.redrawAll();
         setTimeout(this._run.bind(this), this.DELAY);   
     }
@@ -134,27 +141,52 @@ TinyAsm.prototype.run = function() {
 // Runs the code to completion (private helper for TinyAsm.run()).
 TinyAsm.prototype._run = function() {
     if (this.pc < this.parsedCode.length) {
-        var err = this.step();
-        if (err) {
-            // The most recent step returned an error, so exit.
-            this.running = false;
-            alert("Error: " + err + "!");
-        } else {
-            // The most recent time returned no error, so contine.
-            setTimeout(this._run.bind(this), this.DELAY);
-        }
+        this.step(function(err) {
+            if (err) {
+                // The most recent step returned an error,
+                // so record that we are done running and exit.
+                this.running = false;
+                alert("Error: " + err + "!");
+            } else {
+                // The most recent time returned no error, so contine.
+                setTimeout(this._run.bind(this), this.DELAY);
+            }
+        }.bind(this));
     } else {
+        // Record that we are done running.
         this.running = false;
     }
 }
 
 // Executes the current instruction, and updates the visualization.
-TinyAsm.prototype.step = function() {
+// If a callback is provided, calls it with any error that occured while
+// stepping.
+TinyAsm.prototype.step = function(callback) {
+    // Record that we are stepping.
+    this.stepping = true;
+
+    // Perform the step, saving the old pc.
+    var oldPc = this.pc;
     var line = this.parsedCode[this.pc];
     var _exec = tinyAsmInstructions[line.op]._exec;
     var err = _exec(this, line.args);
+    var newPc = this.pc;
+
+    // First, draw with the old pc.
+    this.pc = oldPc;
     this.redrawAll();
-    return err;
+    setTimeout(function() {
+        // Now, draw with updated pc.
+        this.pc = newPc;
+        this.redrawAll();
+
+        // Call callback if it exists,
+        // and record that the step has finished.
+        this.stepping = false;
+        if (callback) {
+            callback(err);
+        }
+    }.bind(this), this.DELAY);
 }
 
 // Refreshes the view.

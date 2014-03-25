@@ -5,6 +5,11 @@
     height: 400px;
 }
 
+#raw-code {
+    height: 75%;
+    width: 100%;
+}
+
 .centered-container {
     display: inline-block;
     vertical-align: top;

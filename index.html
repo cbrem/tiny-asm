@@ -60,8 +60,9 @@
                         alert(err);
                         return;
                     }
-                } else if (!ta.running) {
-                    // There is a current TinyAsm which is not freely running.
+                } else if (!ta.running && !ta.stepping) {
+                    // There is a current TinyAsm which is not freely running
+                    // or in the middle of a step.
                     ta.step();
                 }
             }
@@ -78,7 +79,7 @@
             <div id="middle-container">
                 <div class="centered-container">
                     <h2>Write Code Here:</h2>
-                    <textarea cols="50" rows="20" id="raw-code"></textarea>
+                    <textarea id="raw-code"></textarea>
                 </div>
                 <div class="centered-container">
                     <h2>Running Code:</h2>
